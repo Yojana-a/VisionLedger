@@ -1,0 +1,16 @@
+# Ignore the massive virtual environment folder
+.venv/
+env/
+venv/
+
+# Ignore Python's temporary cache files
+__pycache__/
+*.pyc
+
+# Ignore the AI model files (they download automatically anyway)
+.easyocr/
+
+# Ignore your private receipt images
+*.jpg
+*.jpeg
+*.png
