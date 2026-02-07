@@ -175,9 +175,16 @@ else:
             with col2:
                 # Instead of hardcoding "Starbucks", we use the AI's result!
                 st.subheader(data["merchant"])
-                st.write(f"**Raw AI Output:**")
-                st.caption(data["text"])
+
+                show_details= st.checkbox("Show raw AI output")
+
+                if show_details:
+                    st.write("**Raw AI Output:**")
+                    st.caption(data["text"])
                 
+                else:
+                    st.write("Click to view AI output")
+                    
             with col3:
                 st.metric("Status", "Processed")
                 
