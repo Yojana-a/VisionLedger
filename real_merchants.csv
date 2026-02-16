@@ -1,0 +1,184 @@
+merchant_name,mcc_code,category
+Starbucks,5814,Food & Dining
+McDonalds,5814,Food & Dining
+Subway,5814,Food & Dining
+Pizza Hut,5814,Food & Dining
+Dominos,5814,Food & Dining
+Chipotle,5814,Food & Dining
+Taco Bell,5814,Food & Dining
+Burger King,5814,Food & Dining
+Wendys,5814,Food & Dining
+KFC,5814,Food & Dining
+Panera Bread,5814,Food & Dining
+Olive Garden,5814,Food & Dining
+Chilis,5814,Food & Dining
+Applebees,5814,Food & Dining
+IHOP,5814,Food & Dining
+Dennys,5814,Food & Dining
+Red Lobster,5814,Food & Dining
+Buffalo Wild Wings,5814,Food & Dining
+Five Guys,5814,Food & Dining
+In-N-Out Burger,5814,Food & Dining
+Shake Shack,5814,Food & Dining
+Panda Express,5814,Food & Dining
+Jimmy Johns,5814,Food & Dining
+Jersey Mikes,5814,Food & Dining
+Dunkin Donuts,5814,Food & Dining
+Krispy Kreme,5814,Food & Dining
+Cheesecake Factory,5814,Food & Dining
+PF Changs,5814,Food & Dining
+Texas Roadhouse,5814,Food & Dining
+Outback Steakhouse,5814,Food & Dining
+Starbucks Coffee,5814,Food & Dining
+STARBUCKS,5814,Food & Dining
+MCDONALDS,5814,Food & Dining
+McDonald's,5814,Food & Dining
+Subway Sandwiches,5814,Food & Dining
+Domino's Pizza,5814,Food & Dining
+Taco Bell Restaurant,5814,Food & Dining
+Walmart,5411,Groceries
+Target,5411,Groceries
+Whole Foods,5411,Groceries
+Trader Joes,5411,Groceries
+Safeway,5411,Groceries
+Kroger,5411,Groceries
+Albertsons,5411,Groceries
+Publix,5411,Groceries
+Costco,5411,Groceries
+Sams Club,5411,Groceries
+Aldi,5411,Groceries
+Food Lion,5411,Groceries
+Stop & Shop,5411,Groceries
+Giant Eagle,5411,Groceries
+HEB,5411,Groceries
+Wegmans,5411,Groceries
+Sprouts,5411,Groceries
+WinCo,5411,Groceries
+Fresh Thyme,5411,Groceries
+Walmart Supercenter,5411,Groceries
+Target Store,5411,Groceries
+Whole Foods Market,5411,Groceries
+Trader Joe's,5411,Groceries
+Costco Wholesale,5411,Groceries
+Shell,5541,Transportation
+Chevron,5541,Transportation
+BP,5541,Transportation
+Exxon,5541,Transportation
+Mobil,5541,Transportation
+76 Gas,5541,Transportation
+Arco,5541,Transportation
+Texaco,5541,Transportation
+Sunoco,5541,Transportation
+Circle K,5541,Transportation
+Speedway,5541,Transportation
+7-Eleven Gas,5541,Transportation
+Wawa,5541,Transportation
+QuikTrip,5541,Transportation
+RaceTrac,5541,Transportation
+Uber,4121,Transportation
+Lyft,4121,Transportation
+Yellow Cab,4121,Transportation
+Enterprise,7512,Transportation
+Hertz,7512,Transportation
+Shell Gas Station,5541,Transportation
+BP Gas,5541,Transportation
+ExxonMobil,5541,Transportation
+Uber Trip,4121,Transportation
+AMC Theatres,7832,Entertainment
+Regal Cinemas,7832,Entertainment
+Cinemark,7832,Entertainment
+Netflix,5735,Entertainment
+Spotify,5735,Entertainment
+Apple Music,5735,Entertainment
+Hulu,5735,Entertainment
+Disney+,5735,Entertainment
+HBO Max,5735,Entertainment
+Amazon Prime Video,5735,Entertainment
+YouTube Premium,5735,Entertainment
+Steam,5735,Entertainment
+PlayStation,5735,Entertainment
+Xbox,5735,Entertainment
+Nintendo,5735,Entertainment
+GameStop,5735,Entertainment
+Dave & Busters,5735,Entertainment
+Top Golf,5735,Entertainment
+AMF Bowling,5735,Entertainment
+Six Flags,5735,Entertainment
+AMC Theater,7832,Entertainment
+NETFLIX.COM,5735,Entertainment
+SPOTIFY USA,5735,Entertainment
+Amazon,5942,Shopping
+eBay,5942,Shopping
+Best Buy,5732,Shopping
+Home Depot,5211,Shopping
+Lowes,5211,Shopping
+Macys,5651,Shopping
+Nordstrom,5651,Shopping
+Kohls,5651,Shopping
+JCPenney,5651,Shopping
+Gap,5651,Shopping
+Old Navy,5651,Shopping
+Banana Republic,5651,Shopping
+H&M,5651,Shopping
+Zara,5651,Shopping
+Forever 21,5651,Shopping
+TJ Maxx,5651,Shopping
+Ross,5651,Shopping
+Nike,5651,Shopping
+Adidas,5651,Shopping
+Foot Locker,5651,Shopping
+Dicks Sporting Goods,5651,Shopping
+REI,5651,Shopping
+Bed Bath & Beyond,5651,Shopping
+Bath & Body Works,5651,Shopping
+Sephora,5651,Shopping
+Ulta,5651,Shopping
+PetSmart,5651,Shopping
+Petco,5651,Shopping
+Barnes & Noble,5651,Shopping
+Books-A-Million,5651,Shopping
+Amazon.com,5942,Shopping
+BESTBUY,5651,Shopping
+AT&T,4814,Utilities
+Verizon,4814,Utilities
+T-Mobile,4814,Utilities
+Sprint,4814,Utilities
+Comcast,4899,Utilities
+Xfinity,4899,Utilities
+Spectrum,4899,Utilities
+Cox,4899,Utilities
+CenturyLink,4899,Utilities
+Frontier,4899,Utilities
+PG&E,4899,Utilities
+SCE,4899,Utilities
+Con Edison,4899,Utilities
+Duke Energy,4899,Utilities
+American Water,4899,Utilities
+Verizon Wireless,4814,Utilities
+ATT Payment,4899,Utilities
+Comcast Cable,4899,Utilities
+CVS Pharmacy,5912,Healthcare
+Walgreens,5912,Healthcare
+Rite Aid,5912,Healthcare
+Walmart Pharmacy,5912,Healthcare
+Target Pharmacy,5912,Healthcare
+Kaiser,8011,Healthcare
+LabCorp,8011,Healthcare
+Quest Diagnostics,8011,Healthcare
+Minute Clinic,8011,Healthcare
+Urgent Care,8011,Healthcare
+CVS,5912,Healthcare
+WALGREENS,8011,Healthcare
+Uber Eats,5812,Food & Dining
+DoorDash,5812,Food & Dining
+Grubhub,5812,Food & Dining
+Postmates,5812,Food & Dining
+Instacart,7299,Other
+Dry Cleaner,7299,Other
+Laundromat,7299,Other
+Car Wash,7299,Other
+Great Clips,7299,Other
+24 Hour Fitness,7997,Entertainment
+Planet Fitness,7997,Entertainment
+LA Fitness,7997,Entertainment
+Anytime Fitness,7997,Entertainment
