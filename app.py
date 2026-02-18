@@ -193,7 +193,11 @@ else:
     if uploaded_files:
         receipt_list = uploaded_files
     else:
-        receipt_list = ["receipt1.jpg", "receipt2.jpg"] # Make sure these exist!
+        receipt_list = ["receipt1.jpg", "receipt2.jpg"]
+
+    if "ledger" not in st.session_state:
+        st.session_state.ledger=pd.DataFrame(columns=["Merchant","Category","Amount"])
+
     
     all_data=[] #stores all receipt data
     category_totals={} #creating a dict
@@ -201,10 +205,11 @@ else:
     for receipt in receipt_list:
         #We run the AI on each receipt in the loop
         with st.spinner("AI is reading pixels..."):
-            data = analyze_image(receipt)
+            receipt_data = analyze_image(receipt)
+
             #add to category totals
-            cat=data["category"]
-            category_totals[cat]=category_totals.get(cat,0)+ data["price"] #finding total amount in a particular category
+            cat=receipt_data["category"]
+            category_totals[cat]=category_totals.get(cat,0)+ receipt_data["price"] #finding total amount in a particular category
         
         with st.container(border=True):
             col1, col2, col3 = st.columns([1, 2, 1])
@@ -214,14 +219,14 @@ else:
             
             with col2:
                 # Instead of hardcoding "Starbucks", we use the AI's result!
-                st.subheader(data["merchant"])
-                st.caption(f"{data['category']}({data['confidence']*100:.0f}% confident)")
+                st.subheader(receipt_data["merchant"])
+                st.caption(f"{receipt_data['category']}({receipt_data['confidence']*100:.0f}% confident)")
 
                 show_details= st.checkbox("Show raw AI output",  key=f"details_{receipt}") # helps us differentiate between two or more receipts
 
                 if show_details:
                     st.write("**Raw AI Output:**")
-                    st.caption(data["text"])
+                    st.caption(receipt_data["text"])
                 
                 else:
                     st.write("Click to view AI output")
@@ -233,23 +238,32 @@ else:
                 # We use number_input so you can fix it if the AI is still off
                 final_price = st.number_input(
                     "Verified Total",
-                    value=float(data["price"]),
+                    value=float(receipt_data["price"]),
                     step=0.01,
                     format="%.2f",
                     key=f"price_{receipt}" # Unique key for each receipt
                 )
                 
                 if st.button("Save Data", key=f"save_{receipt}"):
-                    st.success(f"Saved ${final_price:.2f}")
+                    category_totals[cat] = category_totals.get(cat, 0) + final_price
+
+                    new_entry=pd.DataFrame([{
+                        "Merchant":receipt_data["merchant"],
+                        "Category":cat,
+                        "Amount":final_price
+                    }])
+
+                    st.session_state.ledger = pd.concat([st.session_state.ledger, new_entry], ignore_index=True) #saving to permanent session state
+                    st.success(f"Saved ${final_price:.2f} to ledger")
     
     #only show if category_totals{} is not empty
-    if category_totals:
+    if not st.session_state.ledger.empty:
         st.subheader("spending by category")
-        #convert dictionary to dataframe
-        df_chart = pd.DataFrame(
-            list(category_totals.items()),
-            columns=['Category','Amount']
-        ).sort_values('Amount', ascending=False) #sorts from highest to the lowest
+        
+        # We create df_chart from the LEDGER so it remembers all saved receipts
+        df_chart = st.session_state.ledger.groupby("Category")["Amount"].sum().reset_index()
+        #it groups all the same category together and reset takes the column and rows back to regular columns
+        df_chart = df_chart.sort_values('Amount', ascending=False)
 
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -264,7 +278,7 @@ else:
             df_chart,
             values='Amount',
             names='Category',
-            title='Spending by Category',
+            title='Spending Piechart',
             hole=0.4
         )
         st.plotly_chart(fig, use_container_width=True)
