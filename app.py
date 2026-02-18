@@ -8,6 +8,8 @@ import numpy as np          # For Numerical Operations (Standard AI library)
 import re                   # For "Regex" (To find prices and dates in the text)
 import time                 # To simulate processing delays
 from PIL import Image       # To handle and display image files properly
+import plotly.express as px
+import pickle
 
 # 1. SETUP: High-performance caching for the AI model
 @st.cache_resource
@@ -18,6 +20,33 @@ def load_ocr_model():
 # Initialize the reader
 reader = load_ocr_model()
 
+@st.cache_resource
+def load_category_model():
+    #Load the trained ML categorization model
+    try:
+        with open('category_model.pkl', 'rb') as f: #pkl, jpg, pdf uses read binary(rb)
+            vectorizer, model = pickle.load(f)
+        return vectorizer, model
+    except FileNotFoundError:
+        st.error("Model not found! Please run 'python trainModel.py' first.")
+        st.stop()
+    
+def categorize_merchant(merchant_name):
+    #use trained model to predict category from merchant name
+    #merchant_name the merchant/store name from ocr
+    #returns tuple:(category,confidence) eg("food&dining", 0.85)
+    try:
+        vectorizer, model = load_category_model()
+
+        X=vectorizer.transform([merchant_name]) #Convert merchnat name to numerical values
+        category=model.predict(X)[0]#predict category
+        confidence=model.predict_proba(X).max()
+        return category, confidence
+    
+    except Exception as e:
+        return "Other", 0.0
+    #fallback if model fails
+    
 def analyze_image(image_file):
     #asks if the image has read method
     #if its an uploaded file
@@ -51,7 +80,7 @@ def analyze_image(image_file):
     if total_matches:
         # Take the LAST "Total" match (the final total, not subtotal)
         last_match = total_matches[-1]
-        before_total = last_match.group(1).strip()
+        before_total = last_match.group(1).strip()#to clean captured chunk of text
         after_total = last_match.group(2).strip()
         
         # Try to find price AFTER "Total" first (most common)
@@ -126,11 +155,16 @@ def analyze_image(image_file):
         # This helps users see where the OCR might have misread $
         cleaned_text = full_text.replace("8", "$ (or 8)")
 
+    #categorize merchnat using ML
+    category, confidence = categorize_merchant(merchant)
+
     return {
         "merchant": merchant, 
         "text": full_text,
         "cleaned_text": cleaned_text,
-        "price": detected_price
+        "price": detected_price,
+        "category": category,
+        "confidence": confidence
     } #returning a dictionary with all the info
 
 #2.Login Page
@@ -160,12 +194,18 @@ else:
         receipt_list = uploaded_files
     else:
         receipt_list = ["receipt1.jpg", "receipt2.jpg"] # Make sure these exist!
+    
+    all_data=[] #stores all receipt data
+    category_totals={} #creating a dict
 
     for receipt in receipt_list:
-        # HERE IS THE MAGIC: We run the AI on each receipt in the loop
+        #We run the AI on each receipt in the loop
         with st.spinner("AI is reading pixels..."):
             data = analyze_image(receipt)
-
+            #add to category totals
+            cat=data["category"]
+            category_totals[cat]=category_totals.get(cat,0)+ data["price"] #finding total amount in a particular category
+        
         with st.container(border=True):
             col1, col2, col3 = st.columns([1, 2, 1])
             
@@ -175,8 +215,9 @@ else:
             with col2:
                 # Instead of hardcoding "Starbucks", we use the AI's result!
                 st.subheader(data["merchant"])
+                st.caption(f"{data['category']}({data['confidence']*100:.0f}% confident)")
 
-                show_details= st.checkbox("Show raw AI output")
+                show_details= st.checkbox("Show raw AI output",  key=f"details_{receipt}") # helps us differentiate between two or more receipts
 
                 if show_details:
                     st.write("**Raw AI Output:**")
@@ -200,3 +241,30 @@ else:
                 
                 if st.button("Save Data", key=f"save_{receipt}"):
                     st.success(f"Saved ${final_price:.2f}")
+    
+    #only show if category_totals{} is not empty
+    if category_totals:
+        st.subheader("spending by category")
+        #convert dictionary to dataframe
+        df_chart = pd.DataFrame(
+            list(category_totals.items()),
+            columns=['Category','Amount']
+        ).sort_values('Amount', ascending=False) #sorts from highest to the lowest
+
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Spending", f"${df_chart['Amount'].sum():.2f}") #gives total spending by adding amounts
+        with col2:
+            st.metric("Receipts Processed", len(receipt_list))
+        with col3:
+            st.metric("Top Category", df_chart.iloc[0]['Category']) #gets the first row and category name from it
+        
+        # Create and display pie chart
+        fig = px.pie(
+            df_chart,
+            values='Amount',
+            names='Category',
+            title='Spending by Category',
+            hole=0.4
+        )
+        st.plotly_chart(fig, use_container_width=True)
