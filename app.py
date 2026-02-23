@@ -11,6 +11,64 @@ from PIL import Image       # To handle and display image files properly
 import plotly.express as px
 import pickle
 
+# Page configuration
+st.set_page_config(
+    page_title="VisionLedger - AI Receipt Analyzer",
+    page_icon="💸",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Custom CSS for better styling
+st.markdown("""
+<style>
+    .main-header {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #1f77b4;
+        margin-bottom: 0;
+    }
+    .sub-header {
+        font-size: 1.2rem;
+        color: #666;
+        margin-top: 0;
+    }
+    .metric-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+        border-radius: 10px;
+        color: white;
+        text-align: center;
+    }
+    .receipt-card {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 4px solid #1f77b4;
+    }
+    .category-badge {
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        display: inline-block;
+    }
+    .stButton>button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 24px;
+        font-weight: 600;
+    }
+    .stButton>button:hover {
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # 1. SETUP: High-performance caching for the AI model
 @st.cache_resource
 def load_ocr_model():
@@ -172,22 +230,41 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
 if not st.session_state.logged_in:
-    st.title("🔐 VisionLedger Login")
-    user = st.text_input("Username")
-    passw = st.text_input("Password", type="password")
-    if st.button("Login"):
-        if user == "admin" and passw == "1234":
-            st.session_state.logged_in = True
-            st.rerun()
-        else:
-            st.error("Wrong password!")
+    left, center, right = st.columns([1, 2, 1]) # width ration 1:2:1
+    with center:
+        st.markdown("<h1 style='text-align: center; color: #1f77b4;'>💸 VisionLedger</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #666;'>AI-Powered Receipt Analyzer</p>", unsafe_allow_html=True)
+
+        with st.container():
+            st.markdown("### 🔐 Login")
+            user = st.text_input("Username", placeholder="Enter username")
+            passw = st.text_input("Password", type="password", placeholder="Enter password")
+
+            col_a, col_b, col_c = st.columns([1, 2, 1])
+            with col_b:
+                if st.button("Login", use_container_width=True):
+                    if user == "admin" and passw == "1234":
+                        st.session_state.logged_in = True
+                        st.rerun()
+                    else:
+                        st.error("Invalid credentials!")
 
 #3. The DASHBOARD for the App
 else:
-    st.title("💸 VisionLedger Dashboard")
+    # Header
+    col1, col2 = st.columns([6, 1])
+    with col1:
+        st.markdown("<h1 class='main-header'>💸 VisionLedger Dashboard</h1>", unsafe_allow_html=True)
+        st.markdown("<p class='sub-header'>AI-powered receipt analysis and expense tracking</p>", unsafe_allow_html=True)
+    with col2:
+        if st.button("🚪 Logout"):
+            st.session_state.logged_in = False
+            st.rerun()
     
     # Add the uploader to the sidebar
-    uploaded_files = st.sidebar.file_uploader("Upload Receipts", accept_multiple_files=True)
+    with st.sidebar:
+        st.markdown("### 📤 Upload Receipts")
+        uploaded_files = st.sidebar.file_uploader("Upload Receipts", accept_multiple_files=True)
     
     # Decide which receipts to loop through
     if uploaded_files:
@@ -212,26 +289,33 @@ else:
             category_totals[cat]=category_totals.get(cat,0)+ receipt_data["price"] #finding total amount in a particular category
         
         with st.container(border=True):
+            st.markdown("<div class='receipt-card'>", unsafe_allow_html=True)
             col1, col2, col3 = st.columns([1, 2, 1])
             
             with col1:
                 st.image(receipt, use_container_width=True)
             
             with col2:
-                # Instead of hardcoding "Starbucks", we use the AI's result!
-                st.subheader(receipt_data["merchant"])
-                st.caption(f"{receipt_data['category']}({receipt_data['confidence']*100:.0f}% confident)")
+                # Category badge
+                confidence_color = "#4caf50" if receipt_data['confidence'] > 0.7 else "#ff9800" if receipt_data['confidence'] > 0.4 else "#f44336"
+                st.markdown(f"""
+                <div style='margin: 10px 0;'>
+                    <span style='background: {confidence_color}; color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem;'>
+                        📂 {receipt_data['category']} ({receipt_data['confidence']*100:.0f}% confident)
+                    </span>
+                </div>
+                """, unsafe_allow_html=True)
 
                 show_details= st.checkbox("Show raw AI output",  key=f"details_{receipt}") # helps us differentiate between two or more receipts
 
                 if show_details:
                     st.write("**Raw AI Output:**")
                     st.caption(receipt_data["text"])
-                
                 else:
                     st.write("Click to view AI output")
                     
             with col3:
+                st.markdown("### 💰 Amount")
                 st.metric("Status", "Processed")
                 
                 # Display the cleaned price found by your Regex logic
@@ -279,6 +363,12 @@ else:
             values='Amount',
             names='Category',
             title='Spending Piechart',
-            hole=0.4
+            hole=0.4,
+            color_discrete_sequence=px.colors.qualitative.Set3
         )
+        fig.update_layout(
+                showlegend=True,
+                height=400,
+                font=dict(size=14)
+            )
         st.plotly_chart(fig, use_container_width=True)
