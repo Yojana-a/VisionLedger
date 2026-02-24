@@ -19,53 +19,134 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for better styling
 st.markdown("""
-<style>
-    .main-header {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: #1f77b4;
-        margin-bottom: 0;
-    }
-    .sub-header {
-        font-size: 1.2rem;
-        color: #666;
-        margin-top: 0;
-    }
-    .metric-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 20px;
-        border-radius: 10px;
-        color: white;
-        text-align: center;
-    }
-    .receipt-card {
-        background: #f8f9fa;
-        border-left: 4px solid #1f77b4;
-    }
-    .category-badge {
-        background: #e3f2fd;
-        color: #1976d2;
-        padding: 5px 15px;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        display: inline-block;
-    }
-    .stButton>button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 10px 24px;
-        font-weight: 600;
-    }
-    .stButton>button:hover {
-        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-</style>
-""", unsafe_allow_html=True)
+            <style>
+                /* Main app background - Coffee gradient */
+                .stApp {
+                background: linear-gradient(135deg, #561C24 0%, #6D2932 50%, #C7B7A3 100%);
+                }
+            
+                /* Sidebar styling */
+                section[data-testid="stSidebar"] {
+                    background: linear-gradient(180deg, #561C24 0%, #6D2932 100%);
+                }
+                section[data-testid="stSidebar"] * {
+                    color: #E8D8C4;
+                }
+            
+                 /* Header styling */
+                .main-header {
+                    font-size: 2.5rem;
+                    font-weight: bold;
+                    color: #E8D8C4;
+                    margin-bottom: 0;
+                    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                }
+                .sub-header {
+                font-size: 1.2rem;
+                color: #C7B7A3;
+                margin-top: 0;
+                }
+            
+                /* Receipt card styling */
+                .receipt-card {
+                    background: #E8D8C4;
+                    padding: 20px;
+                    border-radius: 15px;
+                    box-shadow: 0 8px 16px rgba(86, 28, 36, 0.3);
+                    margin-bottom: 20px;
+                    border: 2px solid #C7B7A3;
+                }
+
+                /* Category badge - for confidence showcase*/
+                .category-badge-high {
+                    background: linear-gradient(135deg, #6D2932 0%, #561C24 100%);
+                    color: #E8D8C4;
+                    padding: 8px 20px;
+                    border-radius: 25px;
+                    font-size: 0.95rem;
+                    display: inline-block;
+                    font-weight: 600;
+                    box-shadow: 0 2px 8px rgba(86, 28, 36, 0.4);
+                }
+                .category-badge-medium {
+                    background: linear-gradient(135deg, #A0826D 0%, #8B6F47 100%);
+                    color: white;
+                    padding: 8px 20px;
+                    border-radius: 25px;
+                    font-size: 0.95rem;
+                    display: inline-block;
+                    font-weight: 600;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                }
+                 
+                /* Button styling */
+                .stButton>button {
+                    background: linear-gradient(135deg, #6D2932 0%, #561C24 100%);
+                    color: #E8D8C4;
+                    border: 2px solid #C7B7A3;
+                    border-radius: 10px;
+                    padding: 12px 28px;
+                    font-weight: 600;
+                    transition: all 0.3s;
+                    box-shadow: 0 4px 12px rgba(86, 28, 36, 0.3);
+                }
+                .stButton>button:hover {
+                    background: linear-gradient(135deg, #561C24 0%, #6D2932 100%);
+                    box-shadow: 0 6px 20px rgba(86, 28, 36, 0.5);
+                    transform: translateY(-2px);
+                    border-color: #E8D8C4;
+                }
+
+                /* Metrics styling - Dark text on light background */
+                div[data-testid="stMetricValue"] {
+                    font-size: 2rem;
+                    font-weight: bold;
+                    color: #561C24;
+                    text-shadow: 1px 1px 2px rgba(255,255,255,0.3);
+                }
+                div[data-testid="stMetricLabel"] {
+                    color: #6D2932;
+                    font-size: 1rem;
+                    font-weight: 500;
+                }
+                
+                /* Input fields */
+                .stNumberInput input {
+                    background: white;
+                    border: 2px solid #C7B7A3;
+                    border-radius: 8px;
+                    color: #561C24;
+                }
+    
+                /* Checkboxes */
+                .stCheckbox {
+                    color: #561C24;
+                }
+            
+                /* Horizontal rule */
+                hr {
+                    border-color: #C7B7A3;
+                    opacity: 0.3;
+                }
+            
+                /* File uploader */
+                section[data-testid="stFileUploader"] {
+                    background: rgba(255, 255, 255, 0.5);
+                    border: 2px dashed #C7B7A3;
+                    border-radius: 10px;
+                    padding: 20px;
+                }
+            
+                /* Dataframe styling */
+                .stDataFrame {
+                    border: 2px solid #C7B7A3;
+                    border-radius: 8px;
+                }
+                
+            </style>
+            """, unsafe_allow_html=True)
+
 
 # 1. SETUP: High-performance caching for the AI model
 @st.cache_resource
@@ -298,7 +379,7 @@ else:
                 confidence_color = "#4caf50" if receipt_data['confidence'] > 0.7 else "#ff9800" if receipt_data['confidence'] > 0.4 else "#f44336"
                 st.markdown(f"""
                 <div style='margin: 10px 0;'>
-                    <span style='background: {confidence_color}; color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem;'>
+                    <span style='background: {confidence_color}; color: white; padding: 5px 15px; border-radius: 20px; font-size: 1.5rem;'>
                         📂 {receipt_data['category']} ({receipt_data['confidence']*100:.0f}% confident)
                     </span>
                 </div>
@@ -310,7 +391,9 @@ else:
                     st.write("**Raw AI Output:**")
                     st.caption(receipt_data["text"])
                 else:
-                    st.write("Click to view AI output")
+                    st.markdown("<span style='font-size:1rem; color:gray;'>Click to view AI output</span>",
+                    unsafe_allow_html=True)
+                    #st.write("Click to view AI output")
                     
             with col3:
                 st.markdown("### 💰 Amount")
@@ -341,7 +424,7 @@ else:
     
     #only show if category_totals{} is not empty
     if not st.session_state.ledger.empty:
-        st.subheader("spending by category")
+        st.subheader("**Spending by category**")
         
         # We create df_chart from the LEDGER so it remembers all saved receipts
         df_chart = st.session_state.ledger.groupby("Category")["Amount"].sum().reset_index()
