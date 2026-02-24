@@ -348,137 +348,172 @@ if not st.session_state.logged_in:
 
 #3. The DASHBOARD for the App
 else:
-    # Header
-    col1, col2 = st.columns([6, 1])
-    with col1:
-        st.markdown("<h1 class='main-header'>💸 VisionLedger Dashboard</h1>", unsafe_allow_html=True)
-        st.markdown("<p class='sub-header'>AI-powered receipt analysis and expense tracking</p>", unsafe_allow_html=True)
-    with col2:
-        if st.button("🚪 Logout"):
+    #1. Custom CSS
+    st.markdown("""
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+            
+            html, body, [class*="css"] {
+                font-family: 'Inter', sans-serif;
+            }
+            
+            .main-header {
+                font-family: 'Inter', sans-serif;
+                font-weight: 800;
+                letter-spacing: -1px;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+    # 2. Sidebar Navigation
+    with st.sidebar:
+        st.markdown("# 💸 VisionLedger")
+        page = st.radio("Navigation", ["Dashboard", "Total Spendings"])
+        st.divider()
+        
+        # Logout at the bottom
+        if st.button("🚪 Logout", use_container_width=True):
             st.session_state.logged_in = False
             st.rerun()
     
-    # Add the uploader to the sidebar
-    with st.sidebar:
-        st.markdown("### 📤 Upload Receipts")
-        uploaded_files = st.sidebar.file_uploader("Upload Receipts", accept_multiple_files=True)
-    
-    # Decide which receipts to loop through
-    if uploaded_files:
-        receipt_list = uploaded_files
-    else:
-        receipt_list = ["receipt1.png"]
+        #PAGE Dashboard 
+        if page == "Dashboard":
+            st.markdown("<h1 class='main-header'>Receipt Analysis</h1>", unsafe_allow_html=True)
 
-    if "ledger" not in st.session_state:
-        st.session_state.ledger=pd.DataFrame(columns=["Merchant","Category","Amount"])
+            with st.sidebar:
+                st.markdown("---")
+                uploaded_files = st.file_uploader("Upload Receipts", accept_multiple_files=True)
 
     
-    all_data=[] #stores all receipt data
-    category_totals={} #creating a dict
+            # Decide which receipts to loop through
+            if not uploaded_files:
+                st.info("👋 Welcome! Please upload your receipts in the sidebar to begin.")
+                receipt_list = ["receipt1.png"]
 
-    for receipt in receipt_list:
-        #We run the AI on each receipt in the loop
-        with st.spinner("Loading..."):
-            receipt_data = analyze_image(receipt)
+            if "ledger" not in st.session_state:
+                st.session_state.ledger=pd.DataFrame(columns=["Merchant","Category","Amount"])
 
-            #add to category totals
-            cat=receipt_data["category"]
-            category_totals[cat]=category_totals.get(cat,0)+ receipt_data["price"] #finding total amount in a particular category
-        
-        with st.container(border=True):
-            st.markdown("<div class='receipt-card'>", unsafe_allow_html=True)
-            col1, col2, col3 = st.columns([1.2, 2.5, 1.5])
             
-            with col1:
-                st.image(receipt, width='stretch')
-            
-            with col2:
-                # Category badge
-                confidence_color = "#4caf50" if receipt_data['confidence'] > 0.7 else "#ff9800" if receipt_data['confidence'] > 0.4 else "#f44336"
-                st.markdown(f"""
-                <div style='margin: 10px 0;'>
-                    <span style='background: {confidence_color}; color: white; padding: 5px 15px; border-radius: 20px; font-size: 1.5rem;'>
-                        📂 {receipt_data['category']} ({receipt_data['confidence']*100:.0f}% confident)
-                    </span>
-                </div>
-                """, unsafe_allow_html=True)
+            #all_data=[] #stores all receipt data
+            #category_totals={} #creating a dict
 
-                show_details= st.checkbox("Show raw AI output",  key=f"details_{receipt}") # helps us differentiate between two or more receipts
+            for receipt in uploaded_files:
+                #We run the AI on each receipt in the loop
+                with st.spinner("Loading..."):
+                    receipt_data = analyze_image(receipt)
 
-                if show_details:
-                    st.write("**Raw AI Output:**")
-                    st.caption(receipt_data["text"])
-                else:
-                    st.markdown("<span style='font-size:1rem; color:gray;'>Click to view AI output</span>",
-                    unsafe_allow_html=True)
-                    #st.write("Click to view AI output")
+                    #add to category totals
+                    #cat=receipt_data["category"]
+                    #category_totals[cat]=category_totals.get(cat,0)+ receipt_data["price"] #finding total amount in a particular category
+                
+                with st.container(border=True):
+                    st.markdown("<div class='receipt-card'>", unsafe_allow_html=True)
+                    col1, col2, col3 = st.columns([1.2, 2.5, 1.5])
                     
-            with col3:
-                st.markdown("### 💰 Amount")
-                st.metric("Status", "Processed")
-                
-                # Display the cleaned price found by your Regex logic
-                # We use number_input so you can fix it if the AI is still off
-                final_price = st.number_input(
-                    "Verified Total",
-                    value=float(receipt_data["price"]),
-                    step=0.01,
-                    format="%.2f",
-                    key=f"price_{receipt}", # Unique key for each receipt
-                    label_visibility="collapsed"
-                )
-                
-                if st.button("Save Data", key=f"save_{receipt}"):
-                    category_totals[cat] = category_totals.get(cat, 0) + final_price
+                    with col1:
+                        st.image(receipt, width='stretch')
+                    
+                    with col2:
+                        # Category badge
+                        confidence=receipt_data['confidence']
+                        color = "#4caf50" if confidence > 0.7 else "#ff9800" if confidence > 0.4 else "#f44336"
+                        st.markdown(f"""
+                        <div style='margin: 10px 0;'>
+                            <span style='background: {color}; color: white; padding: 5px 15px; border-radius: 20px; font-size: 1.5rem;'>
+                                📂 {receipt_data['category']} ({receipt_data['confidence']*100:.0f}% confident)
+                            </span>
+                        </div>
+                        """, unsafe_allow_html=True)
 
-                    new_entry=pd.DataFrame([{
-                        "Merchant":receipt_data["merchant"],
-                        "Category":cat,
-                        "Amount":final_price
-                    }])
+                        if st.checkbox("Show raw AI output", key=f"details_{receipt.name}"):
+                            st.caption(f"**Merchant:** {receipt_data['merchant']}")
+                            st.text_area("OCR Result", receipt_data["text"], height=100)
+                            
+                    with col3:
+                        st.markdown("### 💰 Amount")
+                        st.metric("Status", "Processed")
+                        
+                        # Display the cleaned price found by your Regex logic
+                        # We use number_input so you can fix it if the AI is still off
+                        final_price = st.number_input(
+                            "Verified Total",
+                            value=float(receipt_data["price"]),
+                            step=0.01,
+                            format="%.2f",
+                            key=f"price_{receipt}", # Unique key for each receipt
+                            label_visibility="collapsed"
+                        )
+                        
+                        if st.button("Save Data", key=f"save_{receipt.name}", width='strech'):
+                            #category_totals[cat] = category_totals.get(cat, 0) + final_price
 
-                    st.session_state.ledger = pd.concat([st.session_state.ledger, new_entry], ignore_index=True) #saving to permanent session state
-                    st.success(f"Saved ${final_price:.2f} to ledger")
+                            new_entry=pd.DataFrame([{
+                                "Merchant":receipt_data["merchant"],
+                                "Category":receipt_data['category'],
+                                "Amount":final_price
+                            }])
+
+                            st.session_state.ledger = pd.concat([st.session_state.ledger, new_entry], ignore_index=True) #saving to permanent session state
+                            st.success(f"Saved ${final_price:.2f} to ledger")
+
+        elif page == "Total Spendings":
+            st.markdown("<h1 class='main-header'>Financial Overview</h1>", unsafe_allow_html=True)
     
-    #only show if category_totals{} is not empty
-    if not st.session_state.ledger.empty:
-        st.subheader("**Spending by category**")
-        
-        # We create df_chart from the LEDGER so it remembers all saved receipts
-        df_chart = st.session_state.ledger.groupby("Category")["Amount"].sum().reset_index()
-        #it groups all the same category together and reset takes the column and rows back to regular columns
-        df_chart = df_chart.sort_values('Amount', ascending=False)
+            #only show if category_totals{} is not empty
+            if not st.session_state.ledger.empty:
+                st.warning("No data found! Please go to the Dashboard and save some receipts first.")
+                
+            else:
+                total_spent=st.seesion_state.ledger["Amount"].sum()
+                num_receipts=len(st.session_state.ledger)
 
-        col_left, col_right = st.columns([1,1])
+                #calculate top category
+                cat_group = st.session_state.ledger.groupby("Category")["Amount"].sum().reset_index()
+                top_cat_row = cat_group.loc[cat_group['Amount'].idxmax()]
 
-        with col_left:
-            #4 metric with 2x2 grid
-            metric_col1, metric_col2 = st.columns(2)
+                m1, m2, m3 = st.columns(3)
+                with m1:
+                    st.metric("Total spending",f"${total_spent:.2f}")
+                with m2:
+                    st.metric("Top category", top_cat_row["Category"])
+                with m3:
+                    st.metric("Receipts Processed", num_receipts)
+                
+                col_left, col_right = st.columns([1,2,1])
+                # Create and display pie chart
+                with col_left:
+                    fig = px.pie(
+                        cat_group,
+                        values='Amount',
+                        names='Category',
+                        title='Spending Piechart',
+                        hole=0.5,
+                        color_discrete_sequence=px.colors.qualitative.Pastel
+                    )
+                    fig.update_layout(
+                            showlegend=True,
+                            margin=dict(t=0, b=0, l=0, r=0)
+                        )
+                    st.plotly_chart(fig, width='stretch')
 
-            with metric_col1:
-                st.metric("Total Spending", 
-                          f"${df_chart['Amount'].sum():.2f}",
-                          help="Sum of all receipts") #gives total spending by adding amounts
-                st.metric("Top Category",
-                          df_chart.iloc[0]['Category'])
-            
-            with metric_col2:
-                st.metric("Receipts Processed", len(receipt_list))
-        
-        # Create and display pie chart
-        with col_right:
-            fig = px.pie(
-                df_chart,
-                values='Amount',
-                names='Category',
-                title='Spending Piechart',
-                hole=0.4,
-                color_discrete_sequence=px.colors.qualitative.Set3
-            )
-            fig.update_layout(
-                    showlegend=True,
-                    height=400,
-                    font=dict(size=14),
-                    title_font_size=18
-                )
-            st.plotly_chart(fig, width='stretch')
+                with col_right:
+                    st.subheader("Spending History")
+                    # Display a clean version of the ledger
+                    st.dataframe(
+                        st.session_state.ledger,
+                        column_config={
+                            "Amount": st.column_config.NumberColumn("Amount", format="$%.2f"),
+                        },
+                        hide_index=True,
+                        use_container_width=True
+                    )
+
+                    # 3. EXPORT FEATURE (Bonus for a CS Project)
+                    csv = st.session_state.ledger.to_csv(index=False).encode('utf-8')
+                    st.download_button(
+                        label="📥 Download Expenses as CSV",
+                        data=csv,
+                        file_name="vision_ledger_report.csv",
+                        mime="text/csv",
+                        use_container_width=True
+                    )
