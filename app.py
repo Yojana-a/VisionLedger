@@ -42,8 +42,6 @@ st.markdown("""
     }
     .receipt-card {
         background: #f8f9fa;
-        padding: 15px;
-        border-radius: 10px;
         border-left: 4px solid #1f77b4;
     }
     .category-badge {
@@ -242,7 +240,7 @@ if not st.session_state.logged_in:
 
             col_a, col_b, col_c = st.columns([1, 2, 1])
             with col_b:
-                if st.button("Login", use_container_width=True):
+                if st.button("Login", width='stretch'):
                     if user == "admin" and passw == "1234":
                         st.session_state.logged_in = True
                         st.rerun()
@@ -270,7 +268,7 @@ else:
     if uploaded_files:
         receipt_list = uploaded_files
     else:
-        receipt_list = ["receipt1.jpg", "receipt2.jpg"]
+        receipt_list = ["receipt1.png"]
 
     if "ledger" not in st.session_state:
         st.session_state.ledger=pd.DataFrame(columns=["Merchant","Category","Amount"])
@@ -281,7 +279,7 @@ else:
 
     for receipt in receipt_list:
         #We run the AI on each receipt in the loop
-        with st.spinner("AI is reading pixels..."):
+        with st.spinner("Loading..."):
             receipt_data = analyze_image(receipt)
 
             #add to category totals
@@ -290,10 +288,10 @@ else:
         
         with st.container(border=True):
             st.markdown("<div class='receipt-card'>", unsafe_allow_html=True)
-            col1, col2, col3 = st.columns([1, 2, 1])
+            col1, col2, col3 = st.columns([1.2, 2.5, 1.5])
             
             with col1:
-                st.image(receipt, use_container_width=True)
+                st.image(receipt, width='stretch')
             
             with col2:
                 # Category badge
@@ -325,7 +323,8 @@ else:
                     value=float(receipt_data["price"]),
                     step=0.01,
                     format="%.2f",
-                    key=f"price_{receipt}" # Unique key for each receipt
+                    key=f"price_{receipt}", # Unique key for each receipt
+                    label_visibility="collapsed"
                 )
                 
                 if st.button("Save Data", key=f"save_{receipt}"):
@@ -349,26 +348,36 @@ else:
         #it groups all the same category together and reset takes the column and rows back to regular columns
         df_chart = df_chart.sort_values('Amount', ascending=False)
 
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.metric("Total Spending", f"${df_chart['Amount'].sum():.2f}") #gives total spending by adding amounts
-        with col2:
-            st.metric("Receipts Processed", len(receipt_list))
-        with col3:
-            st.metric("Top Category", df_chart.iloc[0]['Category']) #gets the first row and category name from it
+        col_left, col_right = st.columns([1,1])
+
+        with col_left:
+            #4 metric with 2x2 grid
+            metric_col1, metric_col2 = st.columns(2)
+
+            with metric_col1:
+                st.metric("Total Spending", 
+                          f"${df_chart['Amount'].sum():.2f}",
+                          help="Sum of all receipts") #gives total spending by adding amounts
+                st.metric("Top Category",
+                          df_chart.iloc[0]['Category'])
+            
+            with metric_col2:
+                st.metric("Receipts Processed", len(receipt_list))
         
         # Create and display pie chart
-        fig = px.pie(
-            df_chart,
-            values='Amount',
-            names='Category',
-            title='Spending Piechart',
-            hole=0.4,
-            color_discrete_sequence=px.colors.qualitative.Set3
-        )
-        fig.update_layout(
-                showlegend=True,
-                height=400,
-                font=dict(size=14)
+        with col_right:
+            fig = px.pie(
+                df_chart,
+                values='Amount',
+                names='Category',
+                title='Spending Piechart',
+                hole=0.4,
+                color_discrete_sequence=px.colors.qualitative.Set3
             )
-        st.plotly_chart(fig, use_container_width=True)
+            fig.update_layout(
+                    showlegend=True,
+                    height=400,
+                    font=dict(size=14),
+                    title_font_size=18
+                )
+            st.plotly_chart(fig, width='stretch')
