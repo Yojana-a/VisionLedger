@@ -21,39 +21,39 @@ st.set_page_config(
 
 st.markdown("""
             <style>
-                /* Main app background - Coffee gradient */
+                /* Main app background - Light coffee gradient */
                 .stApp {
-                background: linear-gradient(135deg, #561C24 0%, #6D2932 50%, #C7B7A3 100%);
+                    background: linear-gradient(135deg, #C7B7A3 0%, #E8D8C4 50%, #F5F0E8 100%);
                 }
-            
-                /* Sidebar styling */
+    
+                /* Sidebar styling - Dark for contrast */
                 section[data-testid="stSidebar"] {
                     background: linear-gradient(180deg, #561C24 0%, #6D2932 100%);
                 }
                 section[data-testid="stSidebar"] * {
-                    color: #E8D8C4;
+                    color: #E8D8C4 !important;
                 }
-            
-                 /* Header styling */
+    
+                /* Header styling - Dark text on light background */
                 .main-header {
                     font-size: 2.5rem;
                     font-weight: bold;
-                    color: #E8D8C4;
+                    color: #561C24;
                     margin-bottom: 0;
-                    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                    text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
                 }
                 .sub-header {
-                font-size: 1.2rem;
-                color: #C7B7A3;
-                margin-top: 0;
+                    font-size: 1.2rem;
+                    color: #6D2932;
+                    margin-top: 0;
                 }
             
-                /* Receipt card styling */
+                /* Receipt card styling - White for maximum contrast */
                 .receipt-card {
-                    background: #E8D8C4;
+                    background: white;
                     padding: 20px;
                     border-radius: 15px;
-                    box-shadow: 0 8px 16px rgba(86, 28, 36, 0.3);
+                    box-shadow: 0 8px 16px rgba(86, 28, 36, 0.2);
                     margin-bottom: 20px;
                     border: 2px solid #C7B7A3;
                 }
@@ -308,25 +308,43 @@ def analyze_image(image_file):
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
+if "user_db" not in st.session_state:
+    st.session_state.user_db = {"admin": "1234"} # Keep your default admin
+
 if not st.session_state.logged_in:
-    left, center, right = st.columns([1, 2, 1]) # width ration 1:2:1
+    left, center, right = st.columns([1, 2, 1])
     with center:
         st.markdown("<h1 style='text-align: center; color: #1f77b4;'>💸 VisionLedger</h1>", unsafe_allow_html=True)
         st.markdown("<p style='text-align: center; color: #666;'>AI-Powered Receipt Analyzer</p>", unsafe_allow_html=True)
 
-        with st.container():
-            st.markdown("### 🔐 Login")
-            user = st.text_input("Username", placeholder="Enter username")
-            passw = st.text_input("Password", type="password", placeholder="Enter password")
+        # CHANGE STARTS HERE: Use tabs for Login and Registration
+        tab_login, tab_reg = st.tabs(["🔐 Login", "📝 Register"])
 
-            col_a, col_b, col_c = st.columns([1, 2, 1])
-            with col_b:
-                if st.button("Login", width='stretch'):
-                    if user == "admin" and passw == "1234":
-                        st.session_state.logged_in = True
-                        st.rerun()
-                    else:
-                        st.error("Invalid credentials!")
+        with tab_login:
+            user = st.text_input("Username", placeholder="Enter username", key="login_user")
+            passw = st.text_input("Password", type="password", placeholder="Enter password", key="login_pass")
+            
+            if st.button("Login", use_container_width=True):
+                # Check against our dynamic user_db instead of hardcoded strings
+                if user in st.session_state.user_db and st.session_state.user_db[user] == passw:
+                    st.session_state.logged_in = True
+                    st.rerun()
+                else:
+                    st.error("Invalid credentials!")
+
+        with tab_reg:
+            st.markdown("### Create New Account")
+            new_user = st.text_input("Choose Username", placeholder="e.g. JohnDoe", key="reg_user")
+            new_pass = st.text_input("Choose Password", type="password", key="reg_pass")
+            
+            if st.button("Create Account", use_container_width=True):
+                if new_user in st.session_state.user_db:
+                    st.error("Username already exists!")
+                elif new_user and new_pass:
+                    st.session_state.user_db[new_user] = new_pass
+                    st.success("Registration successful! Go to Login tab.")
+                else:
+                    st.warning("Please fill out both fields.")
 
 #3. The DASHBOARD for the App
 else:
