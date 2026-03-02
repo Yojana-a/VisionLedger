@@ -419,7 +419,6 @@ else:
             with st.container(border=True):
                 st.markdown("<div class='receipt-card'>", unsafe_allow_html=True)
                 col1, col2, col3 = st.columns([1.2, 2.5, 1.5])
-                st.markdown("</div>", unsafe_allow_html=True)
                 
                 with col1:
                     st.image(receipt, use_container_width=True)
@@ -431,19 +430,18 @@ else:
                     st.markdown(f"""
                     <div style='margin: 10px 0;'>
                         <span style='background: {color}; color: white; padding: 5px 15px; border-radius: 20px; font-size: 1.5rem;'>
-                            📂 {receipt_data['category']}
+                            📂 {receipt_data['category']} ({receipt_data['confidence']*100:.0f}% confident)
                         </span>
                     </div>
                     """, unsafe_allow_html=True)
-                    st.progress(confidence, text=f"AI Confidence: {confidence*100:.0f}%")
 
-                    with st.expander("🔍 View AI Reasoning"):
-                        st.write(f"**Detected Merchant:** {receipt_data['merchant']}")
-                        st.info(f"{receipt_data['text']}...")
-                    
+                    if st.checkbox("Show raw AI output", key=f"details_{receipt.name}"):
+                        st.caption(f"**Merchant:** {receipt_data['merchant']}")
+                        st.text_area("OCR Result", receipt_data["text"], height=100)
                         
                 with col3:
                     st.markdown("### 💰 Amount")
+                    st.metric("Status", "Processed")
                     
                     # Display the cleaned price found by your Regex logic
                     # We use number_input so you can fix it if the AI is still off
@@ -452,7 +450,8 @@ else:
                         value=float(receipt_data["price"]),
                         step=0.01,
                         format="%.2f",
-                        key=f"price_{receipt.name}", # Unique key for each receipt
+                        key=f"price_{receipt}", # Unique key for each receipt
+                        label_visibility="collapsed"
                     )
                     
                     if st.button("Save Data", key=f"save_{receipt.name}", use_container_width=True):
@@ -465,7 +464,7 @@ else:
                         }])
 
                         st.session_state.ledger = pd.concat([st.session_state.ledger, new_entry], ignore_index=True) #saving to permanent session state
-                        st.toast(f"Saved ${final_price:.2f} to ledger")
+                        st.success(f"Saved ${final_price:.2f} to ledger")
 
     elif page == "Total Spendings":
         st.markdown("<h1 class='main-header'>Financial Overview</h1>", unsafe_allow_html=True)
@@ -482,33 +481,6 @@ else:
             cat_group = st.session_state.ledger.groupby("Category")["Amount"].sum().reset_index()
             top_cat_row = cat_group.loc[cat_group['Amount'].idxmax()]
 
-            #Centering PieChart using empty columns
-            _, mid_col, _ = st.columns([1,2,1])
-
-            with mid_col:
-                # Use maroon color shades for the chart
-                maroon_colors = ['#561C24', '#6D2932', '#7E303A', '#923E49', '#A64D58']
-                
-                fig = px.pie(
-                    cat_group,
-                    values='Amount',
-                    names='Category',
-                    hole=0.5,
-                    color_discrete_sequence=maroon_colors
-                )
-                
-                # REMOVE BLACK BACKGROUND & Center styling
-                fig.update_layout(
-                    paper_bgcolor='rgba(0,0,0,0)',  # Makes background transparent
-                    plot_bgcolor='rgba(0,0,0,0)',   # Makes plot background transparent
-                    showlegend=True,
-                    legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5),
-                    margin=dict(t=10, b=10, l=10, r=10),
-                    height=400
-                )
-                st.plotly_chart(fig, use_container_width=True)
-
-            st.divider()
             m1, m2, m3 = st.columns(3)
             with m1:
                 st.metric("Total spending",f"${total_spent:.2f}")
@@ -517,27 +489,44 @@ else:
             with m3:
                 st.metric("Receipts Processed", num_receipts)
             
-            
-            st.subheader("Spending History")
-            # Display a clean version of the ledger
-            st.dataframe(
-                st.session_state.ledger,
-                column_config={
-                    "Amount": st.column_config.NumberColumn("Amount", format="$%.2f"),
-                },
-                hide_index=True,
-                use_container_width=True
-            )
+            col_left, col_right = st.columns([1,2])
+            # Create and display pie chart
+            with col_left:
+                fig = px.pie(
+                    cat_group,
+                    values='Amount',
+                    names='Category',
+                    title='Spending Piechart',
+                    hole=0.5,
+                    color_discrete_sequence=px.colors.qualitative.Pastel
+                )
+                fig.update_layout(
+                        showlegend=True,
+                        margin=dict(t=0, b=0, l=0, r=0)
+                    )
+                st.plotly_chart(fig, width='stretch')
 
-            # 3. EXPORT FEATURE (Bonus for a CS Project)
-            csv = st.session_state.ledger.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                label="📥 Download Expenses as CSV",
-                data=csv,
-                file_name="vision_ledger_report.csv",
-                mime="text/csv",
-                use_container_width=True
-            )
+            with col_right:
+                st.subheader("Spending History")
+                # Display a clean version of the ledger
+                st.dataframe(
+                    st.session_state.ledger,
+                    column_config={
+                        "Amount": st.column_config.NumberColumn("Amount", format="$%.2f"),
+                    },
+                    hide_index=True,
+                    use_container_width=True
+                )
+
+                # 3. EXPORT FEATURE (Bonus for a CS Project)
+                csv = st.session_state.ledger.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="📥 Download Expenses as CSV",
+                    data=csv,
+                    file_name="vision_ledger_report.csv",
+                    mime="text/csv",
+                    use_container_width=True
+                )
 
 
 """
