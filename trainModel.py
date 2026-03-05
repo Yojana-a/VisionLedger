@@ -17,7 +17,8 @@ y=df['category']
 vectorizer=TfidfVectorizer(
     lowercase=True,
     ngram_range=(1,2),
-    max_features=500
+    max_features=5000,
+    sublinear_tf=True #smooths frequency differences
 )
 
 X=vectorizer.fit_transform(X_text)
@@ -48,13 +49,15 @@ print(f"Test merchants: {len(test_merchants)} unique merchants")
 
 #train model 
 #training the ML model
-print("TRaining the model")
+print("Training the model")
 
 model = RandomForestClassifier(
     n_estimators=100,
     random_state=42,
     class_weight='balanced',
-    max_depth=20
+    max_depth=20,
+    min_samples_leaf=1,
+    n_jobs=-1 #the speed booster, uses all CPU cores
 )
 
 model.fit(X_train, y_train)

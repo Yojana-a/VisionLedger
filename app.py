@@ -11,6 +11,7 @@ from PIL import Image       # To handle and display image files properly
 import plotly.express as px
 import pickle
 
+
 # Page configuration
 st.set_page_config(
     page_title="VisionLedger - AI Receipt Analyzer",
@@ -173,6 +174,15 @@ def load_category_model():
     except FileNotFoundError:
         st.error("Model not found! Please run 'python trainModel.py' first.")
         st.stop()
+
+def normalize(name):
+    name = str(name).lower()
+    name = re.sub(r'#\d+', '', name)          # remove store numbers like #12345
+    name = re.sub(r'\d+', '', name)           # remove all other digits
+    name = re.sub(r'[^a-z\s]', '', name)      # remove special characters
+    name = re.sub(r'\s+', ' ', name).strip()  # collapse extra spaces
+    return name
+
     
 def categorize_merchant(merchant_name):
     #use trained model to predict category from merchant name
@@ -180,8 +190,8 @@ def categorize_merchant(merchant_name):
     #returns tuple:(category,confidence) eg("food&dining", 0.85)
     try:
         vectorizer, model = load_category_model()
-
-        X=vectorizer.transform([merchant_name]) #Convert merchnat name to numerical values
+        cleaned = normalize(merchant_name)
+        X=vectorizer.transform([cleaned]) #Convert merchnat name to numerical values
         category=model.predict(X)[0]#predict category
         confidence=model.predict_proba(X).max()
         return category, confidence
