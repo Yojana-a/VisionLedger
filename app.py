@@ -548,15 +548,3 @@ else:
                 mime="text/csv",
                 use_container_width=True
             )
-
-
-"""
-.receipt-card {
-                    background: white;
-                    padding: 20px;
-                    border-radius: 15px;
-                    box-shadow: 0 8px 16px rgba(86, 28, 36, 0.2);
-                    margin-bottom: 20px;
-                    border: 2px solid #C7B7A3;
-                }
-"""
