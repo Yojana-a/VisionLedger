@@ -1,8 +1,6 @@
-from os import replace
 import streamlit as st      # For the Web Interface & Dashboard
 import easyocr              # The PyTorch-based OCR Engine (The "Real" AI)
 import torch                # The Deep Learning Framework (Backend for EasyOCR)
-import tensorflow as tf     # The ML Framework (For the Logic/Classification)
 import pandas as pd         # For Data Manipulation
 import numpy as np          # For Numerical Operations (Standard AI library)
 import re                   # For "Regex" (To find prices and dates in the text)
