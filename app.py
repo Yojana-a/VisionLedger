@@ -237,12 +237,12 @@ def analyze_image(image_file):
         # Try to find price AFTER "Total" first (most common)
         # Pattern 1: Normal order like "20.00" or "$20.00" or "820.00"
         # Pattern 2: Reversed order like ".00 820" (MUST have 8 before the number)
-        price_matches_after = list(re.finditer(r'[8$]?(\d+)[.,](\d{2})|[.,](\d{2})\s*8(\d+)', after_total))
+        price_matches_after = list(re.finditer(r'[8$]?(\d+)[.,](\d{1,2})|[.,](\d{1,2})\s*8(\d+)', after_total))
         price_match = price_matches_after[0] if price_matches_after else None
         
         # If not found after, look BEFORE "Total" - take the LAST price (closest to Total)
         if not price_match:
-            price_matches_before = list(re.finditer(r'[8$]?(\d+)[.,](\d{2})|[.,](\d{2})\s*8(\d+)', before_total))
+            price_matches_before = list(re.finditer(r'[8$]?(\d+)[.,](\d{1,2})|[.,](\d{1,2})\s*8(\d+)', before_total))
             price_match = price_matches_before[-1] if price_matches_before else None
         
         if price_match:
@@ -266,7 +266,7 @@ def analyze_image(image_file):
         all_prices = []
         
         # Find all normal price patterns
-        for match in re.finditer(r'[8$]?(\d+)[.,](\d{2})', tight_text):
+        for match in re.finditer(r'[8$]?(\d+)[.,](\d{1,2})', tight_text):
             val = match.group(0)
             # Remove $ or leading 8
             if val.startswith('$'):
