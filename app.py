@@ -8,6 +8,7 @@ import time                 # To simulate processing delays
 from PIL import Image       # To handle and display image files properly
 import plotly.express as px
 import pickle
+import bcrypt
 
 
 # Page configuration
@@ -20,138 +21,247 @@ st.set_page_config(
 
 st.markdown("""
             <style>
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:wght@600;700&display=swap');
+
+                html, body, [class*="css"] {
+                    font-family: 'Inter', sans-serif;
+                }
+
                 /* Main app background - Light coffee gradient */
                 .stApp {
-                    background: linear-gradient(135deg, #C7B7A3 0%, #E8D8C4 50%, #F5F0E8 100%);
+                    background: linear-gradient(150deg, #EFE4D4 0%, #F6EFE3 45%, #FBF7F0 100%);
                 }
-    
+
                 /* Sidebar styling - Dark for contrast */
                 section[data-testid="stSidebar"] {
-                    background: linear-gradient(180deg, #561C24 0%, #6D2932 100%);
+                    background: linear-gradient(180deg, #4A171E 0%, #6D2932 100%);
+                    border-right: 1px solid rgba(0,0,0,0.15);
                 }
                 section[data-testid="stSidebar"] * {
-                    color: #E8D8C4 !important;
+                    color: #F1E4D3 !important;
                 }
-    
-                /* Header styling - Dark text on light background */
+                section[data-testid="stSidebar"] h1 {
+                    font-family: 'Fraunces', serif;
+                    font-weight: 700;
+                    padding-bottom: 0.2rem;
+                }
+                section[data-testid="stSidebar"] hr {
+                    border-color: rgba(241, 228, 211, 0.25);
+                }
+                /* Sidebar radio nav styled like tabs/pills */
+                section[data-testid="stSidebar"] div[role="radiogroup"] label {
+                    background: rgba(241, 228, 211, 0.06);
+                    border: 1px solid rgba(241, 228, 211, 0.18);
+                    border-radius: 8px;
+                    padding: 8px 12px;
+                    margin-bottom: 6px;
+                    width: 100%;
+                    transition: all 0.2s;
+                }
+                section[data-testid="stSidebar"] div[role="radiogroup"] label:hover {
+                    background: rgba(241, 228, 211, 0.14);
+                }
+
+                /* Header styling */
                 .main-header {
-                    font-size: 2.5rem;
-                    font-weight: bold;
-                    color: #561C24;
-                    margin-bottom: 0;
-                    text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
+                    font-family: 'Fraunces', serif;
+                    font-size: 2.6rem;
+                    font-weight: 700;
+                    color: #4A171E;
+                    margin-bottom: 0.1rem;
+                    letter-spacing: -0.5px;
                 }
                 .sub-header {
-                    font-size: 1.2rem;
-                    color: #6D2932;
+                    font-size: 1.05rem;
+                    color: #8A5A3B;
                     margin-top: 0;
+                    font-weight: 500;
                 }
-            
-                /* Receipt card styling - White for maximum contrast */
-                .receipt-card {
-                    background: white;
-                    padding: 1.5rem;
-                    border-radius: 12px;
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-                    margin-bottom: 25px;
-                    border: 8px solid #6D2932
+
+                /* Section divider under page headers */
+                .header-rule {
+                    height: 3px;
+                    width: 64px;
+                    background: linear-gradient(90deg, #6D2932, #A0826D);
+                    border-radius: 4px;
+                    margin: 6px 0 22px 0;
                 }
-            
-                .ocr-hint{
-                    color: #888;
+
+                /* Receipt card container (targets the actual st.container border div) */
+                div[data-testid="stVerticalBlockBorderWrapper"] {
+                    background: #FFFFFF;
+                    border-radius: 16px !important;
+                    border: 1px solid #E4D6C3 !important;
+                    box-shadow: 0 6px 18px rgba(86, 28, 36, 0.08);
+                    padding: 6px 4px;
+                    margin-bottom: 22px;
+                    transition: box-shadow 0.25s ease;
+                }
+                div[data-testid="stVerticalBlockBorderWrapper"]:hover {
+                    box-shadow: 0 10px 26px rgba(86, 28, 36, 0.14);
+                }
+
+                .ocr-hint {
+                    color: #A08972;
                     font-size: 0.8rem;
                     font-style: italic;
                 }
 
-                /* Category badge - for confidence showcase*/
-                .category-badge-high {
-                    background: linear-gradient(135deg, #6D2932 0%, #561C24 100%);
-                    color: #E8D8C4;
-                    padding: 8px 20px;
-                    border-radius: 25px;
-                    font-size: 0.95rem;
-                    display: inline-block;
-                    font-weight: 600;
-                    box-shadow: 0 2px 8px rgba(86, 28, 36, 0.4);
-                }
-                .category-badge-medium {
-                    background: linear-gradient(135deg, #A0826D 0%, #8B6F47 100%);
+                /* Category badge */
+                .category-badge {
                     color: white;
-                    padding: 8px 20px;
+                    padding: 7px 18px;
                     border-radius: 25px;
-                    font-size: 0.95rem;
+                    font-size: 0.92rem;
                     display: inline-block;
                     font-weight: 600;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                    letter-spacing: 0.2px;
                 }
-                 
-                /* Button styling */
-                .stButton>button {
-                    background: linear-gradient(135deg, #6D2932 0%, #561C24 100%);
-                    color: #E8D8C4;
-                    border: 2px solid #C7B7A3;
-                    border-radius: 10px;
-                    padding: 12px 28px;
+
+                /* Amount card label */
+                .amount-label {
+                    font-family: 'Fraunces', serif;
+                    font-size: 1.05rem;
                     font-weight: 600;
-                    transition: all 0.3s;
-                    box-shadow: 0 4px 12px rgba(86, 28, 36, 0.3);
+                    color: #4A171E;
+                    margin-bottom: 4px;
+                }
+
+                /* Buttons */
+                .stButton>button {
+                    background: linear-gradient(135deg, #6D2932 0%, #4A171E 100%);
+                    color: #F1E4D3;
+                    border: none;
+                    border-radius: 10px;
+                    padding: 11px 26px;
+                    font-weight: 600;
+                    transition: all 0.2s ease;
+                    box-shadow: 0 4px 12px rgba(74, 23, 30, 0.25);
                 }
                 .stButton>button:hover {
-                    background: linear-gradient(135deg, #561C24 0%, #6D2932 100%);
-                    box-shadow: 0 6px 20px rgba(86, 28, 36, 0.5);
-                    transform: translateY(-2px);
-                    border-color: #E8D8C4;
+                    box-shadow: 0 6px 18px rgba(74, 23, 30, 0.38);
+                    transform: translateY(-1px);
+                }
+                .stButton>button:active {
+                    transform: translateY(0px);
                 }
 
-                /* Metrics styling - Dark text on light background */
+                /* Download button variant */
+                .stDownloadButton>button {
+                    background: white;
+                    color: #4A171E;
+                    border: 1.5px solid #6D2932;
+                    border-radius: 10px;
+                    font-weight: 600;
+                }
+                .stDownloadButton>button:hover {
+                    background: #FBF3EA;
+                }
+
+                /* Metric cards */
+                div[data-testid="stMetric"] {
+                    background: white;
+                    border: 1px solid #E4D6C3;
+                    border-radius: 14px;
+                    padding: 14px 18px 10px 18px;
+                    box-shadow: 0 4px 10px rgba(86, 28, 36, 0.06);
+                }
                 div[data-testid="stMetricValue"] {
-                    font-size: 2rem;
-                    font-weight: bold;
-                    color: #561C24;
-                    text-shadow: 1px 1px 2px rgba(255,255,255,0.3);
+                    font-family: 'Fraunces', serif;
+                    font-size: 1.9rem;
+                    font-weight: 700;
+                    color: #4A171E;
                 }
                 div[data-testid="stMetricLabel"] {
-                    color: #6D2932;
-                    font-size: 1rem;
-                    font-weight: 500;
+                    color: #8A5A3B;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.4px;
                 }
-                
-                /* Input fields */
-                .stNumberInput input {
+
+                /* Inputs */
+                .stNumberInput input, .stTextInput input {
                     background: white;
-                    border: 2px solid #C7B7A3;
+                    border: 1.5px solid #E4D6C3;
                     border-radius: 8px;
-                    color: #561C24;
+                    color: #4A171E;
                 }
-    
-                /* Checkboxes */
-                .stCheckbox {
-                    color: #561C24;
+                .stTextInput input:focus, .stNumberInput input:focus {
+                    border-color: #6D2932;
+                    box-shadow: 0 0 0 2px rgba(109, 41, 50, 0.15);
                 }
-            
-                /* Horizontal rule */
+
+                /* Progress bar */
+                div[data-testid="stProgress"] > div > div {
+                    background: linear-gradient(90deg, #6D2932, #A0826D);
+                }
+
+                /* Tabs (login/register) */
+                button[data-baseweb="tab"] {
+                    font-weight: 600;
+                    color: #8A5A3B;
+                }
+                button[data-baseweb="tab"][aria-selected="true"] {
+                    color: #4A171E;
+                }
+                div[data-baseweb="tab-highlight"] {
+                    background-color: #6D2932 !important;
+                }
+
+                /* Expander */
+                details {
+                    border: 1px solid #E4D6C3 !important;
+                    border-radius: 10px !important;
+                    background: #FBF7F0;
+                }
+
                 hr {
-                    border-color: #C7B7A3;
-                    opacity: 0.3;
+                    border-color: #DCC9AE;
+                    opacity: 0.5;
                 }
-            
+
                 /* File uploader */
                 section[data-testid="stFileUploader"] {
-                    background: rgba(255, 255, 255, 0.5);
-                    border: 2px dashed #C7B7A3;
+                    background: rgba(255, 255, 255, 0.08);
+                    border: 1.5px dashed rgba(241, 228, 211, 0.4);
                     border-radius: 10px;
-                    padding: 20px;
+                    padding: 14px;
                 }
-            
-                /* Dataframe styling */
+
+                /* Dataframe */
                 .stDataFrame {
-                    border: 2px solid #C7B7A3;
-                    border-radius: 8px;
+                    border: 1px solid #E4D6C3;
+                    border-radius: 10px;
+                    overflow: hidden;
                 }
-                
+
+                /* Login page shell */
+                .login-card {
+                    background: white;
+                    border: 1px solid #E4D6C3;
+                    border-radius: 20px;
+                    padding: 2.4rem 2.4rem 1.6rem 2.4rem;
+                    box-shadow: 0 12px 30px rgba(86, 28, 36, 0.12);
+                    margin-top: 2.5rem;
+                }
+                .login-title {
+                    font-family: 'Fraunces', serif;
+                    font-size: 2.1rem;
+                    font-weight: 700;
+                    color: #4A171E;
+                    text-align: center;
+                    margin-bottom: 0.1rem;
+                }
+                .login-subtitle {
+                    text-align: center;
+                    color: #8A5A3B;
+                    font-size: 0.95rem;
+                    margin-bottom: 1.6rem;
+                    font-weight: 500;
+                }
             </style>
             """, unsafe_allow_html=True)
-
 
 # 1. SETUP: High-performance caching for the AI model
 @st.cache_resource
@@ -197,6 +307,12 @@ def categorize_merchant(merchant_name):
     except Exception as e:
         return "Other", 0.0
     #fallback if model fails
+
+def hash_password(password):
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def check_password(password, hashed):
+    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
     
 def analyze_image(image_file):
     #asks if the image has read method
@@ -218,7 +334,6 @@ def analyze_image(image_file):
 
     # STRATEGY 1: Look for "Total" line specifically (most reliable)
     # Find the LAST occurrence of standalone "Total" (not S-Total, Subtotal, Sub-Total)
-    
     total_matches = []
     
     # Find all "Total" occurrences with some context before AND after
@@ -233,33 +348,47 @@ def analyze_image(image_file):
         last_match = total_matches[-1]
         before_total = last_match.group(1).strip()#to clean captured chunk of text
         after_total = last_match.group(2).strip()
-        
-        # Try to find price AFTER "Total" first (most common)
-        # Pattern 1: Normal order like "20.00" or "$20.00" or "820.00"
-        # Pattern 2: Reversed order like ".00 820" (MUST have 8 before the number)
-        price_matches_after = list(re.finditer(r'[8$]?(\d+)[.,](\d{1,2})|[.,](\d{1,2})\s*8(\d+)', after_total))
-        price_match = price_matches_after[0] if price_matches_after else None
-        
-        # If not found after, look BEFORE "Total" - take the LAST price (closest to Total)
-        if not price_match:
-            price_matches_before = list(re.finditer(r'[8$]?(\d+)[.,](\d{1,2})|[.,](\d{1,2})\s*8(\d+)', before_total))
-            price_match = price_matches_before[-1] if price_matches_before else None
-        
-        if price_match:
-            groups = price_match.groups()
-            # Check which groups matched (normal order vs reversed)
-            if groups[0] is not None:  # Normal: "20.00"
-                dollars = groups[0]
-                cents = groups[1]
-            else:  # Reversed: ".00 820" (with 8)
-                cents = groups[2]
-                dollars = groups[3]
-            
-            # Remove leading '8' if it looks like a misread '$'
-            if dollars.startswith('8') and len(dollars) >= 2:
+
+        # Catch amounts with a thousands separator (e.g. "$5,710.79" OCR'd as "35.710.79")
+        thousands_match = re.search(r'[3489$]?(\d{1,3})[.,](\d{3})[.,](\d{2})\b', after_total)
+        if thousands_match:
+            dollars = thousands_match.group(1) + thousands_match.group(2)
+            cents = thousands_match.group(3)
+        # Strip a misread '$' digit if dollar portion looks too long for a normal total
+            if len(dollars) > 5 and dollars[0] in ('3', '4', '8'):
                 dollars = dollars[1:]
-            
             detected_price = float(f"{dollars}.{cents}")
+
+        if not thousands_match:
+            # Try to find price AFTER "Total" first (most common)
+            # Pattern 1: Normal order like "20.00" or "$20.00" or "820.00"
+            # Pattern 2: Reversed order like ".00 820" (MUST have 8 before the number)
+            price_matches_after = list(re.finditer(r'(?:^|[\s$])[8$]?(\d{1,4})[.,](\d{1,2})|[.,](\d{1,2})\s*8(\d{1,4})', after_total))
+            print(repr(after_total))
+            print(repr(price_matches_after))
+                    
+            price_match = price_matches_after[0] if price_matches_after else None
+            
+            # If not found after, look BEFORE "Total" - take the LAST price (closest to Total)
+            if not price_match:
+                price_matches_before = list(re.finditer(r'[8$]?(\d+)[.,](\d{1,2})|[.,](\d{1,2})\s*8(\d+)', before_total))
+                price_match = price_matches_before[-1] if price_matches_before else None
+            
+            if price_match:
+                groups = price_match.groups()
+                # Check which groups matched (normal order vs reversed)
+                if groups[0] is not None:  # Normal: "20.00"
+                    dollars = groups[0]
+                    cents = groups[1]
+                else:  # Reversed: ".00 820" (with 8)
+                    cents = groups[2]
+                    dollars = groups[3]
+                
+                # Remove leading '8' if it looks like a misread '$'
+                if dollars.startswith(('8', '4')) and len(dollars) >= 2 and len(dollars)<=4:
+                    dollars = dollars[1:]
+                
+                detected_price = float(f"{dollars}.{cents}")
     
     # STRATEGY 2: No "Total" found - find the LARGEST price (likely the total)
     if detected_price == 0.0:
@@ -323,7 +452,7 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
 if "user_db" not in st.session_state:
-    st.session_state.user_db = {"admin": "1234"} # Keep your default admin
+    st.session_state.user_db = {"admin": hash_password("1234")} # Keep your default admin
 
 if not st.session_state.logged_in:
     left, center, right = st.columns([1, 2, 1])
@@ -340,7 +469,7 @@ if not st.session_state.logged_in:
             
             if st.button("Login", use_container_width=True):
                 # Check against our dynamic user_db instead of hardcoded strings
-                if user in st.session_state.user_db and st.session_state.user_db[user] == passw:
+                if user in st.session_state.user_db and check_password(passw, st.session_state.user_db[user]):
                     st.session_state.logged_in = True
                     st.rerun()
                 else:
@@ -355,7 +484,7 @@ if not st.session_state.logged_in:
                 if new_user in st.session_state.user_db:
                     st.error("Username already exists!")
                 elif new_user and new_pass:
-                    st.session_state.user_db[new_user] = new_pass
+                    st.session_state.user_db[new_user] = hash_password(new_pass)
                     st.success("Registration successful! Go to Login tab.")
                 else:
                     st.warning("Please fill out both fields.")

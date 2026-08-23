@@ -1,7 +1,7 @@
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report
 import pickle
 
@@ -51,13 +51,11 @@ print(f"Test merchants: {len(test_merchants)} unique merchants")
 #training the ML model
 print("Training the model")
 
-model = RandomForestClassifier(
-    n_estimators=100,
-    random_state=42,
+
+model = LogisticRegression(
     class_weight='balanced',
-    max_depth=20,
-    min_samples_leaf=1,
-    n_jobs=-1 #the speed booster, uses all CPU cores
+    max_iter=1000,
+    C=1.0
 )
 
 model.fit(X_train, y_train)
